@@ -11,7 +11,13 @@
     </head>
     <body>
         <div class="container">
-            <h1>this is your agenda :)</h1>
+            <div>
+                <h1>this is your agenda :)</h1>
+                <div style="float: right;">
+                    <p>Hi, {{ current_user.nickname() }} - <a href="{{ escape(users.create_logout_url(request.uri)) }}">logout</a></p>    
+                </div>
+            </div>
+            <br />
             {% block content %}
             {% end %}
         </div>
