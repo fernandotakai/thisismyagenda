@@ -16,7 +16,7 @@
         <tr>
             <td>{{ t.description }}</td>
             <td>{{ t.due_on.strftime("%F - %T") }}</td>
-            <td><a href="/show/{{ t.key() }} ">view</a>&nbsp;<a href="/edit/{{ t.key() }} ">edit</a></td>
+            <td><a href="/show/{{ t.key() }} ">view</a>&nbsp;<a href="/edit/{{ t.key() }} ">edit</a> <a class="delete" href="/delete/{{ t.key() }}">delete</a></td>
         </tr>
         {% end %}
     </tbody>
@@ -27,3 +27,6 @@
 </p>
 {% end %}
 
+{% block js %}
+<script src="/static/js/list.js" type="text/javascript" charset="utf-8"></script>
+{% end %}

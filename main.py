@@ -102,6 +102,22 @@ class EditTaskHandler(BaseHandler):
         else:
             self.render("edit.html", form=form, task=task)
 
+class DeleteTaskHandler(BaseHandler):
+
+    @tornado.web.authenticated
+    def post(self, key):
+        task = models.Task.get(key)
+
+        if not task:
+            raise tornado.web.HTTPError(404)
+
+        if task.user != self.current_user:
+            raise tornado.web.HTTPError(403)
+
+        task.delete()
+
+        self.write(dict(result="ok"))
+
 class VerifyTasksHandler(tornado.web.RequestHandler):
     def get(self):
         for task in models.Task.tasks_due():
@@ -155,6 +171,7 @@ application = tornado.wsgi.WSGIApplication([
     (r"/create/?", CreateTaskHandler),
     (r"/list/?", ListTasksHandler),
     (r"/edit/([^/]+)/?", EditTaskHandler),
+    (r"/delete/([^/]+)/?", DeleteTaskHandler),
     (r"/_ah/xmpp/message/chat/", XMPPHandler),
     (r"/tasks/verify/?", VerifyTasksHandler),
     (r"/tasks/date/?", DatePreviewHandler),
