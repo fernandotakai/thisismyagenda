@@ -2,6 +2,13 @@
 
 {% block css %}
 <link rel="stylesheet" href="/static/css/awesome.css" type="text/css" media="screen" charset="utf-8">
+<style type="text/css" media="screen">
+    .error {
+        margin-top: 30px;
+        margin-bottom: 20px;
+        padding-bottom: 0px;
+    }
+</style>
 {% end %}
 
 {% block title %}
@@ -9,17 +16,29 @@ Editing {{ task.description }}
 {% end %}
 
 {% block content %}
+{% if form.errors %}
+<div class="error">
+    <ul>
+        {% for field_name, field_errors in form.errors.items() %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+            {% end %}
+        {% end %}
+    </ul>
+</div>
+{% end %}
+
 <h3>editing task…</h3>
 
 <form id="save" action="{{ request.uri }}" method="post" accept-charset="utf-8">
     <fieldset id="">
         <legend></legend>
-        <p><label for="description">Description</label><br /><input type="text" class="title" name="description" value="{{ task.description }}" id="description"></p>
-        <p><label for="due_on">Due on</label><br /><input type="text" class="title" name="due_on" value="{{ task.due_on.strftime("%Y-%m-%d %H:%M:%S") }}" id="due_on"></p>
-        <input type="hidden" name="due_on_string" id="due_on_string" value="">
-        <input type="hidden" name="key" value="{{ task.key() }}">
-        <p style="font-size: 1.5em;" id="due_text">your date…</p>
-        <a class="large yellow awesome save">Save!</a>
+        <p>{{ form.description.label }}<br /> {{ form.description(class_="title") }}</p>
+        <p>{{ form.due_on.label }}<br /> {{ form.due_on(class_="title", id="due_on") }} <br />
+        <span style="font-size: 1em;">we support a long list of date styles. if you are not sure if it's correct, press enter on the field or <a id="preview" href="javascript:void(0)">click here</a></span>
+        </p>
+        <p id="date_preview">&nbsp;</p>
+        <a class="large blue awesome save">Save!</a>
     </fieldset>
 </form>
 {% end %}
@@ -31,16 +50,20 @@ Editing {{ task.description }}
         $('.save').click(function(){
             $('#save').submit();
         });
-        
-        $('#due_on').keyup(function(){
-            var d = Date.parse($(this).val());
-            if(d != null){
-                d = d.toString('yyyy-MM-dd - HH:mm:ss');
-                $("#due_text").text(d);
-                $("#due_on_string").val(d);
+
+        $('#due_on').live("keypress", function(e){
+            if (e.keyCode == 13) {
+                $('#preview').click();
             }
-        }).keyup();
+        })
+
+        $('#preview').click(function(){
+            var d = $('#due_on').val();
+
+            $.getJSON('/tasks/date', {'date': d}, function(json){
+                $('#date_preview').html(json.date);
+            })        
+        })
     })
 </script>
 {% end %}
-
