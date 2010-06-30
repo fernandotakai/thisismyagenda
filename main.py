@@ -7,15 +7,18 @@ import os
 from google.appengine.api import users
 from google.appengine.api import mail
 from google.appengine.api import xmpp
+from google.appengine.ext import db
 
 import models
+import forms
 
 from datetime import datetime
+from dateutil.parser import *
 
 import logging
 
 XMPP_MESSAGE="""Hi!,
-Your task %s should be done now! (%s)
+Your task '%s' should be done now! (%s)
 """
 
 EMAIL_MESSAGE="""Hi!,
@@ -54,19 +57,20 @@ class ListTasksHandler(BaseHandler):
 class CreateTaskHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render("create.html")
+        self.render("create.html", form=forms.CreateTaskForm())
 
     @tornado.web.authenticated
     def post(self):
-        description = self.get_argument("description")
-        due_on_string = self.get_argument("due_on_string")
+        form = forms.CreateTaskForm(self.request)
 
-        due_on = datetime.strptime(due_on_string, "%Y-%m-%d - %H:%M:%S")
-        
-        task = models.Task(description=description, due_on=due_on)
-        task.put()
+        if form.validate():
+            task = models.Task()
+            form.populate_obj(task)
+            task.put()
 
-        self.redirect("/")
+            self.redirect("/")
+        else:
+            self.render("create.html", form=forms.CreateTaskForm())
 
 class EditTaskHandler(BaseHandler):
     @tornado.web.authenticated
@@ -76,26 +80,27 @@ class EditTaskHandler(BaseHandler):
         if not task:
             raise tornado.web.HTTPError(404)
 
-        self.render('edit.html', task=task)
+        form = forms.CreateTaskForm(self.request, task)
+
+        self.render('edit.html', form=form, task=task)
 
     @tornado.web.authenticated
     def post(self, key):
-        key = self.get_argument("key")
-        description = self.get_argument("description")
-        due_on_string = self.get_argument("due_on_string")
-        due_on = datetime.strptime(due_on_string, "%Y-%m-%d - %H:%M:%S")
-        
         task = models.Task.get(key)
+        form = forms.CreateTaskForm(self.request)
 
         if not task:
             raise tornado.web.HTTPError(404)
 
-        task.description = description
-        task.due_on = due_on
+        if task.user != self.current_user:
+            raise tornado.web.HTTPError(403)
 
-        task.put()
-
-        self.redirect('/')
+        if form.validate():
+            form.populate_obj(task)
+            task.put()
+            self.redirect('/')
+        else:
+            self.render("edit.html", form=form, task=task)
 
 class VerifyTasksHandler(tornado.web.RequestHandler):
     def get(self):
@@ -103,11 +108,38 @@ class VerifyTasksHandler(tornado.web.RequestHandler):
             if xmpp.get_presence(task.user.email()):
                 xmpp.send_message(task.user.email(), XMPP_MESSAGE % (task.description, task.due_on))
             else:
-                mail.send_mail('fernando.takai@gmail.com', task.user.email(), 
+                mail.send_mail('fernando.takai@gmail.com', task.user.email(),
                                  'Task due', EMAIL_MESSAGE % (task.description, task.due_on))
 
             task.finished = True
             task.put()
+
+class SettingsHandler(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        settings = models.UserSettings.get_or_create()
+        form = forms.SettingsForm(self.request, settings)
+        self.render("settings.html", settings=settings, form=form)
+
+    @tornado.web.authenticated
+    def post(self):
+        form = forms.SettingsForm(self.request)
+        settings = models.UserSettings.get_or_create()
+
+        if form.validate():
+            form.populate_obj(settings)
+            settings.put()
+            self.redirect("/")
+        else:
+            self.render("settings.html", settings=settings, form=form)
+
+class DatePreviewHandler(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        date = self.get_argument("date")
+        date_obj = parse(date, fuzzy=True)
+
+        self.write(dict(date=date_obj.strftime("%Y-%m-%d - %H:%M:%S")))
 
 class XMPPHandler(tornado.web.RequestHandler):
     def post(self):
@@ -124,7 +156,9 @@ application = tornado.wsgi.WSGIApplication([
     (r"/list/?", ListTasksHandler),
     (r"/edit/([^/]+)/?", EditTaskHandler),
     (r"/_ah/xmpp/message/chat/", XMPPHandler),
-    (r"/tasks/verify/?", VerifyTasksHandler), 
+    (r"/tasks/verify/?", VerifyTasksHandler),
+    (r"/tasks/date/?", DatePreviewHandler),
+    (r"/settings", SettingsHandler),
 ], **settings)
 
 def main():
