@@ -1,7 +1,7 @@
 {% extends base.html %}
 
 {% block css %}
-<link rel="stylesheet" href={{ static_url("css/awesome.css") }} type="text/css" media="screen" charset="utf-8">
+<link rel="stylesheet" href="/static/css/awesome.css" type="text/css" media="screen" charset="utf-8">
 {% end %}
 
 {% block title %}
@@ -25,7 +25,7 @@ Editing {{ task.description }}
 {% end %}
 
 {% block js %}
-<script src="{{ static_url("js/date.js") }}" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/date.js" type="text/javascript" charset="utf-8"></script>
 <script type="text/javascript" charset="utf-8">
     $(document).ready(function(){
         $('.save').click(function(){
