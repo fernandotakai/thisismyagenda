@@ -1,0 +1,28 @@
+{% extends base.html %}
+
+{% block content %}
+<br />
+<h3>those are your tasks for today</h3>
+<table>
+    <thead>
+        <tr>
+            <th>description</th>
+            <th>due on</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in tasks %}
+        <tr>
+            <td>{{ t.description }}</td>
+            <td>{{ t.due_on.strftime("%F - %T") }}</td>
+            <td><a href="/show/{{ t.key() }} ">view</a>&nbsp;<a href="/edit/{{ t.key() }} ">edit</a></td>
+        </tr>
+        {% end %}
+    </tbody>
+</table>
+<p>
+<a href="/list">all of them?</a>
+<a href="/create">create a new one</a>
+</p>
+{% end %}

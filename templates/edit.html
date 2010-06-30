@@ -1,0 +1,46 @@
+{% extends base.html %}
+
+{% block css %}
+<link rel="stylesheet" href={{ static_url("css/awesome.css") }} type="text/css" media="screen" charset="utf-8">
+{% end %}
+
+{% block title %}
+Editing {{ task.description }}
+{% end %}
+
+{% block content %}
+<h3>editing task…</h3>
+
+<form id="save" action="{{ request.uri }}" method="post" accept-charset="utf-8">
+    <fieldset id="">
+        <legend></legend>
+        <p><label for="description">Description</label><br /><input type="text" class="title" name="description" value="{{ task.description }}" id="description"></p>
+        <p><label for="due_on">Due on</label><br /><input type="text" class="title" name="due_on" value="{{ task.due_on.strftime("%Y-%m-%d %H:%M:%S") }}" id="due_on"></p>
+        <input type="hidden" name="due_on_string" id="due_on_string" value="">
+        <input type="hidden" name="key" value="{{ task.key() }}">
+        <p style="font-size: 1.5em;" id="due_text">your date…</p>
+        <a class="large yellow awesome save">Save!</a>
+    </fieldset>
+</form>
+{% end %}
+
+{% block js %}
+<script src="{{ static_url("js/date.js") }}" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function(){
+        $('.save').click(function(){
+            $('#save').submit();
+        });
+        
+        $('#due_on').keyup(function(){
+            var d = Date.parse($(this).val());
+            if(d != null){
+                d = d.toString('yyyy-MM-dd - HH:mm:ss');
+                $("#due_text").text(d);
+                $("#due_on_string").val(d);
+            }
+        }).keyup();
+    })
+</script>
+{% end %}
+
