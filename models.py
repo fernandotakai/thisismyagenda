@@ -24,6 +24,8 @@ class Task(Model):
      def tasks_by_user(user=None):
          if user is None:
              user = users.get_current_user()
+         elif isinstance(user, (str, unicode)):
+             user = users.User(user)
 
          return Task.gql('where user = :1 and finished = False', user) 
 
@@ -31,6 +33,8 @@ class Task(Model):
      def tasks_by_user_today(user=None):
          if user is None:
              user = users.get_current_user()
+         elif isinstance(user, (str, unicode)):
+             user = users.User(user)
 
          d = datetime.now()
          d1 = datetime(d.year, d.month, d.day, 00, 00, 01)

@@ -156,8 +156,29 @@ class DatePreviewHandler(BaseHandler):
         self.write(dict(date=date_obj.strftime("%Y-%m-%d - %H:%M:%S")))
 
 class XMPPHandler(tornado.web.RequestHandler):
+
+    def list_tasks(self, email):
+        tasks = ""
+
+        for task in models.Task.tasks_by_user(email):
+            logging.error(task)
+            tasks += "* Task: %s due on %s\n" % (task.description, task.due_on.strftime("%F - %T"))
+
+        if len(tasks) == 0:
+            tasks = "You have no tasks. Go procrastinate!"
+
+        xmpp.send_message(email, tasks)
+
     def post(self):
-        pass
+        _from = self.get_argument("from")
+        body = self.get_argument("body")
+
+        # from must be client@address/resource
+        if "/" in _from:
+            _from = _from.split("/", 1)[0]
+
+        if body.startswith("/list"):
+            self.list_tasks(_from)
 
 settings = {
     "template_path": os.path.join(os.path.dirname(__file__), "templates"),
