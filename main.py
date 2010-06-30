@@ -100,9 +100,8 @@ class EditTaskHandler(BaseHandler):
 class VerifyTasksHandler(tornado.web.RequestHandler):
     def get(self):
         for task in models.Task.tasks_due():
-            logging.error("Task %s is due to on %s" % (task.description, task.due_on))
             if xmpp.get_presence(task.user.email()):
-                xmpp.send_message(XMPP_MESSAGE % (task.description, task.due_on))
+                xmpp.send_message(task.user.email(), XMPP_MESSAGE % (task.description, task.due_on))
             else:
                 mail.send_mail('fernando.takai@gmail.com', task.user.email(), 
                                  'Task due', EMAIL_MESSAGE % (task.description, task.due_on))
