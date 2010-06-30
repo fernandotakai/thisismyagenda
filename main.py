@@ -45,7 +45,13 @@ class BaseHandler(tornado.web.RequestHandler):
 class IndexHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render("index.html", tasks=models.Task.tasks_by_user_today())
+        tasks = models.Task.tasks_by_user_today()
+        
+        if tasks.count(1) == 0:
+            self.redirect("/list")
+            return
+
+        self.render("index.html", tasks=tasks)
 
 class ListTasksHandler(BaseHandler):
     @tornado.web.authenticated
@@ -161,7 +167,6 @@ class XMPPHandler(tornado.web.RequestHandler):
         tasks = ""
 
         for task in models.Task.tasks_by_user(email):
-            logging.error(task)
             tasks += "* Task: %s due on %s\n" % (task.description, task.due_on.strftime("%F - %T"))
 
         if len(tasks) == 0:
