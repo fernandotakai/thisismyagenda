@@ -1,0 +1,42 @@
+{% extends base.html %}
+
+{% block css %}
+<link rel="stylesheet" href="/static/css/awesome.css" type="text/css" media="screen" charset="utf-8">
+{% end %}
+
+{% block title %}
+Settings
+{% end %}
+
+{% block content %}
+<h3>Settings</h3>
+
+<form id="settings" action="{{ request.uri }}" method="post" accept-charset="utf-8">
+    <fieldset id="">
+        <legend></legend>
+        <p>{{ form.xmpp_enabled.label }}<br/> {{ form.xmpp_enabled(id="xmpp_enabled") }}</p>
+        <p class="xmpp">{{ form.xmpp_address.label }}<br/> {{ form.xmpp_address(class_="title") }}</p>
+        <p>{{ form.email_enabled.label }}<br/> {{ form.email_enabled() }}</p>
+        <a class="large yellow awesome save">Save!</a>
+    </fieldset>
+</form>
+{% end %}
+
+{% block js %}
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function(){
+        $('.save').click(function(){
+            $('#settings').submit();
+        });
+
+        $('#xmpp_enabled').click(function(){
+            console.log($(this).is(":checked"));
+            if($(this).attr('checked')){
+                $('.xmpp').show();
+            } else {
+                $('.xmpp').hide();
+            }
+        }).click();
+    })
+</script>
+{% end %}

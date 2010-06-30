@@ -5,13 +5,20 @@ from datetime import datetime
 
 import logging
 
-class Task(db.Model):
+ATTR_DOES_NOT_EXIST="__ATTR_DOES_NOT_EXIST__"
+
+class Model(db.Model):
+     def from_form(self, form):
+         for key, value in form._fields.items():
+             if getattr(self, key, ATTR_DOES_NOT_EXIST) != ATTR_DOES_NOT_EXIST:
+                 setattr(self, key, value.data)
+
+class Task(Model):
      description = db.StringProperty()
      due_on = db.DateTimeProperty()
      created_on = db.DateTimeProperty(auto_now_add=True)
      user = db.UserProperty(auto_current_user_add=True)
      finished = db.BooleanProperty(default=False)
-
 
      @staticmethod
      def tasks_by_user(user=None):
@@ -35,3 +42,21 @@ class Task(db.Model):
      def tasks_due():
          gql = "where finished = False and due_on <= :1"
          return Task.gql(gql, datetime.now())
+
+class UserSettings(Model):
+    user = db.UserProperty(auto_current_user_add=True)
+    xmpp_enabled = db.BooleanProperty(default=True)
+    email_enabled = db.BooleanProperty(default=True)
+    xmpp_address = db.StringProperty()
+
+    @staticmethod
+    def get_or_create():
+        user = users.get_current_user()
+        settings = UserSettings.gql('where user = :1', user).get()
+
+        if not settings:
+            settings = UserSettings(user=user)
+            settings.xmpp_address = user.email()
+            settings.put()
+
+        return settings
