@@ -7,12 +7,10 @@ import os
 from google.appengine.api import users
 from google.appengine.api import mail
 from google.appengine.api import xmpp
-from google.appengine.ext import db
 
 import models
 import forms
 
-from datetime import datetime
 from dateutil.parser import *
 
 import logging
@@ -163,7 +161,6 @@ class XMPPHandler(tornado.web.RequestHandler):
 
 settings = {
     "template_path": os.path.join(os.path.dirname(__file__), "templates"),
-    "static_path": os.path.join(os.path.dirname(__file__), "static")
 }
 
 application = tornado.wsgi.WSGIApplication([
