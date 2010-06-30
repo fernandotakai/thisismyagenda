@@ -5,11 +5,26 @@ import wsgiref.handlers
 import os
 
 from google.appengine.api import users
-from google.appengine.ext import db
+from google.appengine.api import mail
+from google.appengine.api import xmpp
 
 import models
 
 from datetime import datetime
+
+import logging
+
+XMPP_MESSAGE="""Hi!,
+Your task %s should be done now! (%s)
+"""
+
+EMAIL_MESSAGE="""Hi!,
+Your task %s should be done now! (%s)
+
+Best regards,
+
+This is your agenda.
+"""
 
 class BaseHandler(tornado.web.RequestHandler):
     """Implements Google Accounts authentication methods."""
@@ -82,6 +97,23 @@ class EditTaskHandler(BaseHandler):
 
         self.redirect('/')
 
+class VerifyTasksHandler(tornado.web.RequestHandler):
+    def get(self):
+        for task in models.Task.tasks_due():
+            logging.error("Task %s is due to on %s" % (task.description, task.due_on))
+            if xmpp.get_presence(task.user.email()):
+                xmpp.send_message(XMPP_MESSAGE % (task.description, task.due_on))
+            else:
+                mail.send_mail('fernando.takai@gmail.com', task.user.email(), 
+                                 'Task due', EMAIL_MESSAGE % (task.description, task.due_on))
+
+            task.finished = True
+            task.put()
+
+class XMPPHandler(tornado.web.RequestHandler):
+    def post(self):
+        pass
+
 settings = {
     "template_path": os.path.join(os.path.dirname(__file__), "templates"),
     "static_path": os.path.join(os.path.dirname(__file__), "static")
@@ -92,6 +124,8 @@ application = tornado.wsgi.WSGIApplication([
     (r"/create/?", CreateTaskHandler),
     (r"/list/?", ListTasksHandler),
     (r"/edit/([^/]+)/?", EditTaskHandler),
+    (r"/_ah/xmpp/message/chat/", XMPPHandler),
+    (r"/tasks/verify/?", VerifyTasksHandler), 
 ], **settings)
 
 def main():

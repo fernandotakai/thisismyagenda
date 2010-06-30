@@ -1,0 +1,4 @@
+cron:
+- description: verifies due to tasks
+  url: /tasks/verify
+  schedule: every 1 minutes

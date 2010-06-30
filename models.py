@@ -10,6 +10,7 @@ class Task(db.Model):
      due_on = db.DateTimeProperty()
      created_on = db.DateTimeProperty(auto_now_add=True)
      user = db.UserProperty(auto_current_user_add=True)
+     finished = db.BooleanProperty(default=False)
 
 
      @staticmethod
@@ -17,7 +18,7 @@ class Task(db.Model):
          if user is None:
              user = users.get_current_user()
 
-         return Task.gql('where user = :1', user) 
+         return Task.gql('where user = :1 and finished = False', user) 
 
      @staticmethod
      def tasks_by_user_today(user=None):
@@ -28,4 +29,9 @@ class Task(db.Model):
          d1 = datetime(d.year, d.month, d.day, 00, 00, 01)
          d2 = datetime(d.year, d.month, d.day, 23, 59, 59)
 
-         return Task.gql('where user = :1 and due_on >= :2 and due_on <= :3', user, d1, d2).fetch(10)
+         return Task.gql('where user = :1 and due_on >= :2 and due_on <= :3 and finished = False', user, d1, d2).fetch(10)
+
+     @staticmethod
+     def tasks_due():
+         gql = "where finished = False and due_on <= :1"
+         return Task.gql(gql, datetime.now())

@@ -12,5 +12,10 @@ indexes:
 
 - kind: Task
   properties:
+  - name: finished
+  - name: due_on
+
+- kind: Task
+  properties:
   - name: user
   - name: due_on
