@@ -11,15 +11,7 @@ Settings
 {% block content %}
 <h3>Settings</h3>
 
-<form id="settings" action="{{ request.uri }}" method="post" accept-charset="utf-8">
-    <fieldset id="">
-        <legend></legend>
-        <p>{{ form.xmpp_enabled.label }}<br/> {{ form.xmpp_enabled(id="xmpp_enabled") }}</p>
-        <p class="xmpp">{{ form.xmpp_address.label }}<br/> {{ form.xmpp_address(class_="title") }}</p>
-        <p>{{ form.email_enabled.label }}<br/> {{ form.email_enabled() }}</p>
-        <a class="large yellow awesome save">Save!</a>
-    </fieldset>
-</form>
+<p><strong>your api key (for xmpp access)</strong>: {{ settings.api_key }}</p>
 {% end %}
 
 {% block js %}

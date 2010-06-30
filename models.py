@@ -1,6 +1,7 @@
 from google.appengine.api import users
 from google.appengine.ext import db
 
+import uuid
 from datetime import datetime
 
 import logging
@@ -49,18 +50,22 @@ class Task(Model):
 
 class UserSettings(Model):
     user = db.UserProperty(auto_current_user_add=True)
-    xmpp_enabled = db.BooleanProperty(default=True)
-    email_enabled = db.BooleanProperty(default=True)
-    xmpp_address = db.StringProperty()
+    api_key = db.StringProperty()
+    verified = False
 
     @staticmethod
-    def get_or_create():
-        user = users.get_current_user()
+    def get_or_create(user=None):
+        if user is None:
+            user = users.get_current_user()
+        elif isinstance(user, (str, unicode)):
+            user = users.User(user)
+
         settings = UserSettings.gql('where user = :1', user).get()
 
         if not settings:
             settings = UserSettings(user=user)
             settings.xmpp_address = user.email()
+            settings.api_key = uuid.uuid1().hex
             settings.put()
 
         return settings
