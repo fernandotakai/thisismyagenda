@@ -14,7 +14,7 @@
             <div>
                 <h1>this is your agenda :)</h1>
                 <div style="float: right;">
-                    <p>Hi, {{ current_user.nickname() }} - <a href="{{ escape(users.create_logout_url(request.uri)) }}">logout</a></p>    
+                    <p>Hi, {{ current_user.nickname() }} - <a href="/settings">settings</a> - <a href="{{ escape(users.create_logout_url(request.uri)) }}">logout</a></p>    
                 </div>
             </div>
             <br />
