@@ -12,23 +12,21 @@ Settings
 <h3>Settings</h3>
 
 <p><strong>your api key (for xmpp access)</strong>: {{ settings.api_key }}</p>
+<form action="{{ request.uri }}" method="post" id="save" accept-charset="utf-8">
+    <fieldset>
+        <legend></legend>
+        <p>{{ form.timezone.label }}<br/> {{ form.timezone(id="timezone") }}</p>
+        <a class="large blue awesome save">Save!</a>
+    </fieldset>
+</form>
 {% end %}
 
 {% block js %}
 <script type="text/javascript" charset="utf-8">
     $(document).ready(function(){
         $('.save').click(function(){
-            $('#settings').submit();
+            $('#save').submit();
         });
-
-        $('#xmpp_enabled').click(function(){
-            console.log($(this).is(":checked"));
-            if($(this).attr('checked')){
-                $('.xmpp').show();
-            } else {
-                $('.xmpp').hide();
-            }
-        }).click();
     })
 </script>
 {% end %}

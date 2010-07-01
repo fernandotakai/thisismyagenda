@@ -3,6 +3,7 @@ from google.appengine.ext import db
 
 import uuid
 from datetime import datetime
+import pytz
 
 import logging
 
@@ -48,10 +49,14 @@ class Task(Model):
          gql = "where finished = False and due_on <= :1"
          return Task.gql(gql, datetime.now())
 
+     def show_due_on(self, tz):
+         return self.due_on.replace(tzinfo=pytz.utc).astimezone(tz).strftime("%F - %T - %Z")
+
 class UserSettings(Model):
     user = db.UserProperty(auto_current_user_add=True)
     api_key = db.StringProperty()
     verified = db.BooleanProperty(default=False)
+    timezone = db.StringProperty()
 
     @staticmethod
     def get_or_create(user=None):
@@ -66,6 +71,10 @@ class UserSettings(Model):
             settings = UserSettings(user=user)
             settings.xmpp_address = user.email()
             settings.api_key = uuid.uuid1().hex
+            settings.timezone = "UTC"
             settings.put()
 
         return settings
+
+    def get_timezone(self):
+        return pytz.timezone(self.timezone)
