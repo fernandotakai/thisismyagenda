@@ -177,7 +177,7 @@ class XMPPHandler(tornado.web.RequestHandler):
         tasks = ""
 
         for task in models.Task.tasks_by_user(email):
-            tasks += "* id %s: %s due on %s\n" % (task.key(), task.description, task.due_on.strftime("%F - %T"))
+            tasks += "*%s due on %s (%s) \n\n" % (task.description, task.due_on.strftime("%F - %T"), task.key())
 
         if len(tasks) == 0:
             tasks = "You have no tasks. Go procrastinate!"
@@ -188,7 +188,7 @@ class XMPPHandler(tornado.web.RequestHandler):
         task = models.Task.get(key)
         
         if not task or task.user.email() != email:
-            xmpp.send_message(email, "Sorry, could not find that task… try a /list first")
+            xmpp.send_message(email, "Sorry, could not find that task... try a /list first")
             return
 
         task.delete()
@@ -233,8 +233,8 @@ class XMPPHandler(tornado.web.RequestHandler):
 
         if command != "/verify" and not self.validate_user(_from):
             xmpp.send_message(_from, """Sorry, you didn't validated your email. 
-            Can you go to http://thisismyagenda.appspot.com/settings, get your api key
-            and issue a /verify api-key, so you can use me? thx.""")
+Can you go to http://thisismyagenda.appspot.com/settings, get your api key
+and issue a /verify api-key, so you can use me? thx.""")
             return
 
         cmd = getattr(self, command[1:], None)
