@@ -185,7 +185,7 @@ class XMPPHandler(tornado.web.RequestHandler):
         xmpp.send_message(email, tasks)
 
     def delete(self, email, key):
-        task = Task.get(key)
+        task = models.Task.get(key)
         
         if not task or task.user.email() != email:
             xmpp.send_message(email, "Sorry, could not find that task… try a /list first")
@@ -197,11 +197,12 @@ class XMPPHandler(tornado.web.RequestHandler):
 
     def verify(self, email, api_key):
         settings = models.UserSettings.get_or_create(email)
-        message = "Sorry, could not validate your key… Go to http://thisismyagenda.appspot.com/settings and make sure it's correct"
+        message = "Sorry, could not validate your key... Go to http://thisismyagenda.appspot.com/settings and make sure it's correct"
 
         if settings.api_key == api_key:
             settings.verified = True
             message = "Hurray! Validated!"
+            settings.put()
 
         xmpp.send_message(email, message)
 
@@ -217,12 +218,6 @@ class XMPPHandler(tornado.web.RequestHandler):
         if "/" in _from:
             _from = _from.split("/", 1)[0]
 
-        if not self.validate_user(_from):
-            xmpp.send_message(_from, """Sorry, you didn't validated your email. 
-            Can you go to http://thisismyagenda.appspot.com/settings, get your api key
-            and issue a /verify api-key, so you can use me? thx.""")
-            return
-
         try:
             body += " "
             command, value = body.split(" ", 1)
@@ -234,6 +229,12 @@ class XMPPHandler(tornado.web.RequestHandler):
         if not command.startswith("/"):
             logging.error("Command does not start with /")
             self.help(_from)
+            return
+
+        if command != "/verify" and not self.validate_user(_from):
+            xmpp.send_message(_from, """Sorry, you didn't validated your email. 
+            Can you go to http://thisismyagenda.appspot.com/settings, get your api key
+            and issue a /verify api-key, so you can use me? thx.""")
             return
 
         cmd = getattr(self, command[1:], None)
