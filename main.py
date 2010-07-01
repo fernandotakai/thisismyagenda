@@ -182,9 +182,12 @@ class DatePreviewHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         date = self.get_argument("date")
-        date_obj = parse(date, fuzzy=True)
 
-        self.write(dict(date=date_obj.strftime("%Y-%m-%d - %H:%M:%S")))
+        try:
+            date_obj = parse(date, fuzzy=True)
+            self.write(dict(date=date_obj.strftime("%Y-%m-%d - %H:%M:%S")))
+        except Exception:
+            self.write(dict(date="oops, could not understand :/"))
 
 class XMPPHandler(tornado.web.RequestHandler):
 
