@@ -1,4 +1,5 @@
 from google.appengine.api import users
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
 import uuid
@@ -65,14 +66,19 @@ class UserSettings(Model):
         elif isinstance(user, (str, unicode)):
             user = users.User(user)
 
-        settings = UserSettings.gql('where user = :1', user).get()
+        settings = memcache.get("settings_%s" % user.email()) or None
 
         if not settings:
-            settings = UserSettings(user=user)
-            settings.xmpp_address = user.email()
-            settings.api_key = uuid.uuid1().hex
-            settings.timezone = "UTC"
-            settings.put()
+            settings = UserSettings.gql('where user = :1', user).get()
+
+            if not settings:
+                settings = UserSettings(user=user)
+                settings.xmpp_address = user.email()
+                settings.api_key = uuid.uuid1().hex
+                settings.timezone = "UTC"
+                settings.put()
+
+            memcache.set("settings_%s" % user.email(), settings)
 
         return settings
 

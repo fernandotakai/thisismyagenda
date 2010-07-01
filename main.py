@@ -5,6 +5,7 @@ import wsgiref.handlers
 import os
 
 from google.appengine.api import users
+from google.appengine.api import memcache
 from google.appengine.api import mail
 from google.appengine.api import xmpp
 
@@ -171,6 +172,7 @@ class SettingsHandler(BaseHandler):
 
         if form.validate():
             form.populate_obj(settings)
+            memcache.delete("settings_%s" % self.current_user.email())
             settings.put()
             self.redirect("/")
         else:
