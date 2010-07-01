@@ -51,7 +51,7 @@ class Task(Model):
 class UserSettings(Model):
     user = db.UserProperty(auto_current_user_add=True)
     api_key = db.StringProperty()
-    verified = False
+    verified = db.BooleanProperty(default=False)
 
     @staticmethod
     def get_or_create(user=None):
