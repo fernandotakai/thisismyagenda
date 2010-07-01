@@ -85,7 +85,7 @@ class CreateTaskHandler(BaseHandler):
             task = models.Task()
             form.populate_obj(task)
 
-            task.due_on = task.due_on.replace(tzinfo=user_tz).astimezone(pytz.utc)
+            task.due_on = user_tz.localize(task.due_on).astimezone(pytz.utc)
 
             task.put()
 
@@ -121,7 +121,7 @@ class EditTaskHandler(BaseHandler):
 
         if form.validate():
             form.populate_obj(task)
-            task.due_on = task.due_on.replace(tzinfo=settings.get_timezone()).astimezone(pytz.utc)
+            task.due_on = settings.get_timezone().localize(task.due_on).astimezone(pytz.utc)
             task.put()
             self.redirect('/')
         else:
