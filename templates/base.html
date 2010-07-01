@@ -12,7 +12,7 @@
     <body>
         <div class="container">
             <div>
-                <h1>this is your agenda :)</h1>
+                <a href="/" style="text-decoration: none;"><h1>this is your agenda :)</h1></a>
                 <div style="float: right;">
                     <p>Hi, {{ current_user.nickname() }} - <a href="/settings">settings</a> - <a href="{{ escape(users.create_logout_url(request.uri)) }}">logout</a></p>    
                 </div>
