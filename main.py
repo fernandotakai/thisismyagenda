@@ -12,6 +12,7 @@ import models
 import forms
 
 from dateutil.parser import *
+import pytz
 
 import logging
 
@@ -58,12 +59,14 @@ class IndexHandler(BaseHandler):
             self.redirect("/list")
             return
 
-        self.render("index.html", tasks=tasks)
+        settings = models.UserSettings.get_or_create(self.current_user.email())
+        self.render("index.html", tasks=tasks, tz=settings.get_timezone())
 
 class ListTasksHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render("list.html", tasks=models.Task.tasks_by_user())
+        settings = models.UserSettings.get_or_create(self.current_user.email())
+        self.render("list.html", tasks=models.Task.tasks_by_user(), tz=settings.get_timezone())
 
 class CreateTaskHandler(BaseHandler):
     @tornado.web.authenticated
@@ -75,8 +78,14 @@ class CreateTaskHandler(BaseHandler):
         form = forms.CreateTaskForm(self.request)
 
         if form.validate():
+            settings = models.UserSettings.get_or_create(self.current_user.email())
+            user_tz = settings.get_timezone()
+
             task = models.Task()
             form.populate_obj(task)
+
+            task.due_on = task.due_on.replace(tzinfo=user_tz).astimezone(pytz.utc)
+
             task.put()
 
             self.redirect("/")
@@ -86,17 +95,20 @@ class CreateTaskHandler(BaseHandler):
 class EditTaskHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self, key):
+        settings = models.UserSettings.get_or_create(self.current_user.email())
         task = models.Task.get(key)
 
         if not task:
             raise tornado.web.HTTPError(404)
 
+        task.due_on = task.due_on.replace(tzinfo=pytz.utc).astimezone(settings.get_timezone())
         form = forms.CreateTaskForm(self.request, task)
 
         self.render('edit.html', form=form, task=task)
 
     @tornado.web.authenticated
     def post(self, key):
+        settings = models.UserSettings.get_or_create(self.current_user.email())
         task = models.Task.get(key)
         form = forms.CreateTaskForm(self.request)
 
@@ -108,6 +120,7 @@ class EditTaskHandler(BaseHandler):
 
         if form.validate():
             form.populate_obj(task)
+            task.due_on = task.due_on.replace(tzinfo=settings.get_timezone()).astimezone(pytz.utc)
             task.put()
             self.redirect('/')
         else:
@@ -132,11 +145,14 @@ class DeleteTaskHandler(BaseHandler):
 class VerifyTasksHandler(tornado.web.RequestHandler):
     def get(self):
         for task in models.Task.tasks_due():
+            settings = models.UserSettings.get_or_create(task.user.email())
+            tz = settings.get_timezone()
+
             if xmpp.get_presence(task.user.email()):
-                xmpp.send_message(task.user.email(), XMPP_MESSAGE % (task.description, task.due_on))
+                xmpp.send_message(task.user.email(), XMPP_MESSAGE % (task.description, task.show_due_on(tz)))
             else:
                 mail.send_mail('fernando.takai@gmail.com', task.user.email(),
-                                 'Task due', EMAIL_MESSAGE % (task.description, task.due_on))
+                                 'Task due', EMAIL_MESSAGE % (task.description, task.show_due_on(tz)))
 
             task.finished = True
             task.put()
@@ -174,10 +190,12 @@ class XMPPHandler(tornado.web.RequestHandler):
         xmpp.send_message(to, XMPP_HELP)
 
     def list(self, email, when=None):
+        settings = models.UserSettings.get_or_create(email)
+        tz = settings.get_timezone()
         tasks = ""
 
         for task in models.Task.tasks_by_user(email):
-            tasks += "*%s due on %s (%s) \n\n" % (task.description, task.due_on.strftime("%F - %T"), task.key())
+            tasks += "*%s due on %s (%s) \n\n" % (task.description, task.show_due_on(tz), task.key())
 
         if len(tasks) == 0:
             tasks = "You have no tasks. Go procrastinate!"

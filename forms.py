@@ -1,4 +1,4 @@
-from wtforms import Form, BooleanField, TextField, validators
+from wtforms import Form, BooleanField, TextField, SelectField, validators
 from wtforms import widgets
 from wtforms.fields import Field
 from django.utils.datastructures import MultiValueDict
@@ -6,6 +6,7 @@ from django.utils.datastructures import MultiValueDict
 import re
 
 from dateutil import parser
+import pytz
 
 def sanitize_parameter_value(value, strip=True):
     value = re.sub(r"[\x00-\x08\x0e-\x1f]", " ", value)
@@ -51,7 +52,7 @@ class CreateTaskForm(TornadoForm):
     description = TextField("Description", validators=[validators.Required(), validators.Length(min=1, max=1024)])
     due_on = DateTimeField("Due on", validators=[validators.Required()])
 
+CHOICES = map(lambda tz: (tz, tz.replace("_", " ")), pytz.common_timezones)
+
 class SettingsForm(TornadoForm):
-    xmpp_enabled = BooleanField("XMPP?", validators=[validators.Required()], default=True)
-    xmpp_address = TextField("Address", validators=[])
-    email_enabled = BooleanField("Email?", validators=[], default=True)
+    timezone = SelectField('Your timezone', [validators.Required()], choices=CHOICES)
